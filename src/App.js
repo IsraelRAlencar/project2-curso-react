@@ -1,38 +1,68 @@
-import { useReducer } from 'react';
+import { createContext, useContext, useReducer, useRef } from 'react';
 import './App.css';
+import P from 'prop-types';
 
-const globalState = {
+// actions.js
+export const actions = {
+  CHANGE_TITLE: 'CHANGE_TITLE'
+};
+
+// Data.js
+export const globalState = {
   title: 'O título do contexto',
   body: 'O body do contexto',
   counter: 0
 };
 
-const reducer = (state, action) => {
+// Reducer.js
+export const reducer = (state, action) => {
   switch (action.type){
-    case 'muda':
-      console.log('Chamou muda com', action.payload);
-      return { ...state, title: action.payload };
-    case 'inverter':
-      console.log('Chamou inverter');
-      return { ...state, title: state.title.split('').reverse().join('') };
+    case actions.CHANGE_TITLE:
+      console.log('Mudar título');
+      return {...state, title: action.payload};
     default:
-      console.log('Chamou default');
+      console.log('default');
       return {...state};
   }
-}
 
-function App() {
+};
+
+// AppContext.jsx
+export const Context = createContext();
+export const AppContext = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, globalState);
-  const { counter, title, body } = state;
+
+  const changeTitle = (payload) => {
+    dispatch({ type: actions.CHANGE_TITLE, payload });
+  };
+
+  return <Context.Provider value={{ state, changeTitle }}>{children}</Context.Provider>
+};
+
+AppContext.propTypes = {
+  children: P.node
+};
+
+export const H1 = () => {
+  const context = useContext(Context);
+  const inputRef = useRef();
 
   return (
-    <div>
-      <h1>{title} {counter}</h1>
+    <>
+      <h1 onClick={() => context.changeTitle(inputRef.current.value)}>{context.state.title}</h1>
+      <input type="text" ref={inputRef}/>
+    </>
+  );
+};
 
-      <button onClick={() => dispatch({ type: 'muda', payload: new Date().toLocaleString('pt-BR') })}>Click</button>
-      <button onClick={() => dispatch({ type: 'inverter' })}>Invert</button>
-      <button onClick={() => dispatch({ type: 'qualquer coisa' })}>Default</button>
-    </div>
+//App.jsx 
+function App() {
+  return (
+    <AppContext>
+      <div>
+        <H1 />
+      </div>
+    </AppContext>
   );
 }
 
