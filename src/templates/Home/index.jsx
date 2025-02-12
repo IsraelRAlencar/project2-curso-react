@@ -1,46 +1,39 @@
-import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
+import { useDebugValue, useEffect, useState } from "react";
 
-export const Home = () => {
-  const [counted, setCounted] = useState([0, 1]);
-  const divRef = useRef();
+const useMediaQuery = (queryValue, initialValue = false) => {
+  const [match, setMatch] = useState(initialValue);
 
-  useLayoutEffect(() => {
-    const now = Date.now();
-    while (Date.now() < now + 200);
-    divRef.current.divRef.scrollTop = divRef.current.divRef.scrollHeight;
+  useDebugValue(`Query: ${queryValue}`, (name) => {
+    return name + ' modificado';
   });
 
-  const handleClick = () => {
-    setCounted(c => [...c, +c.slice(-1)[0] + 1]);
-    divRef.current.handleClick();
-  }
+  useEffect(() => {
+    let isMounted = true;
+    const matchMedia = window.matchMedia(queryValue);
 
-  return (
-    <>
-      <button onClick={handleClick}>Count {counted.slice(-1)}</button>
-      <DisplayCounted counted={counted} ref={divRef}/>
-    </>
-  );
+    const handleChange = () => {
+      if (!isMounted) return;
+      setMatch(Boolean(matchMedia.matches));
+    };
+
+    matchMedia.addEventListener('change', handleChange);
+    setMatch(Boolean(matchMedia.matches));
+
+    return () => {
+      isMounted = false;
+      matchMedia.removeEventListener('change', handleChange);
+    }
+  }, [queryValue]);
+
+  return match;
 };
 
-export const DisplayCounted = forwardRef(function DisplayCounted({ counted }, ref) {
-  const[rand, setRand] = useState('0.24');
-  const divRef = useRef();
-  
-  const handleClick = () => {
-    setRand(Math.random().toFixed(2));
-  };
-
-  useImperativeHandle(ref, () => ({
-    handleClick,
-    divRef: divRef.current
-  }));
-
-  return (
-    <div ref={divRef} style={{height: '100px', width: '100px', overflowY: 'scroll'}}>
-        {counted.map(c => {
-          return <p onClick={handleClick} key={`c-${c}`}>{c} +++ {rand}</p>
-        })}
-      </div>
-  );
-});
+export const Home = () => {
+  <script src="http://localhost:8097"></script>
+  const huge = useMediaQuery('(min-width: 980px)');
+  const big = useMediaQuery('(max-width: 979px) and (min-width: 768px)');
+  const medium = useMediaQuery('(max-width: 767px) and (min-width: 321px)');
+  const small = useMediaQuery('(max-width: 321px)');
+  const background = huge ? 'red' : big ? 'green' : medium ? 'blue' : small ? 'yellow' : 'black';
+  return <div style={{fontSize: '60px', background}}>Oi</div>
+};
